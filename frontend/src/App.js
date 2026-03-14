@@ -1,31 +1,49 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import axios from "axios";
 
 function App() {
 
   const [image, setImage] = useState(null);
   const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const uploadImage = async (e) => {
+    try {
 
-    const file = e.target.files[0];
+      const file = e.target.files[0];
 
-    setImage(URL.createObjectURL(file));
+      if (!file) return;
 
-    const formData = new FormData();
-    formData.append("file", file);
+      setImage(URL.createObjectURL(file));
+      setLoading(true);
 
-    const response = await axios.post(
-      "https://ideal-chainsaw-97xxrj4jx5xp2x646-8000.app.github.dev/analyze",
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data"
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await axios.post(
+        "https://ideal-chainsaw-97xxrj4jx5xp2x646-8000.app.github.dev/analyze",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data"
+          },
+          timeout: 60000
         }
-      }
-    );
+      );
 
-    setResults(response.data.items);
+      console.log("API response:", response.data);
+
+      setResults(response.data.items || []);
+      setLoading(false);
+
+    } catch (error) {
+
+      console.error("Upload error:", error);
+
+      alert("Upload failed. Check console for details.");
+
+      setLoading(false);
+    }
   };
 
   return (
@@ -36,24 +54,42 @@ function App() {
       <input type="file" onChange={uploadImage} />
 
       {image && (
-        <div>
+        <div style={{ marginTop: "20px" }}>
           <h3>Uploaded Image</h3>
-          <img src={image} alt="preview" width="400"/>
+          <img src={image} alt="preview" width="400" />
         </div>
+      )}
+
+      {loading && (
+        <p>Processing image...</p>
       )}
 
       <h2>Detected Items</h2>
 
       {results.map((item, index) => (
-        <div key={index} style={{border:"1px solid gray", margin:"10px", padding:"10px"}}>
+        <div
+          key={index}
+          style={{
+            border: "1px solid gray",
+            margin: "10px",
+            padding: "10px",
+            borderRadius: "8px"
+          }}
+        >
 
           <p>
-            <strong>{item.color} {item.type}</strong>
+            <strong>
+              {item.color} {item.type}
+            </strong>
           </p>
 
-          {item.products?.map((p, i) => (
+          {item.products && item.products.map((p, i) => (
             <div key={i}>
-              <a href={p.link} target="_blank">
+              <a
+                href={p.link}
+                target="_blank"
+                rel="noreferrer"
+              >
                 {p.name}
               </a>
             </div>
