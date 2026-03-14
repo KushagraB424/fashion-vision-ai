@@ -25,6 +25,7 @@ debugpy==1.8.17
 decorator==5.2.1
 defusedxml==0.7.1
 executing==2.2.1
+faiss-cpu==1.13.2
 fastapi==0.135.1
 fastjsonschema==2.21.2
 filelock==3.25.2
