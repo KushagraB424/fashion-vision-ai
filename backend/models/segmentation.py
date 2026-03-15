@@ -1,34 +1,40 @@
 from ultralytics import YOLO
 
+# Using segmentation model
 model = YOLO("yolov8n-seg.pt")
-
-allowed_classes = ["person", "handbag", "tie", "backpack", "shoe"]
-
 
 def segment(image):
 
     results = model(image)
 
-    items = []
+    detections = []
 
     for r in results:
 
-        boxes = r.boxes
+        boxes = r.boxes.xyxy.cpu().numpy()
+        classes = r.boxes.cls.cpu().numpy()
 
-        for box in boxes:
+        for box, cls in zip(boxes, classes):
 
-            x1, y1, x2, y2 = map(int, box.xyxy[0])
-            cls = int(box.cls)
+            x1, y1, x2, y2 = map(int, box)
 
-            label = r.names[cls]
+            label = model.names[int(cls)]
 
-            # Skip non-clothing objects
-            if label not in allowed_classes:
+            # Only keep clothing related detections
+            clothing_classes = [
+                "person",
+                "handbag",
+                "backpack",
+                "tie",
+                "shoe"
+            ]
+
+            if label not in clothing_classes:
                 continue
 
-            items.append({
-                "type": label,
-                "bbox": [x1, y1, x2, y2]
+            detections.append({
+                "bbox": [x1, y1, x2, y2],
+                "type": label
             })
 
-    return items
+    return detections

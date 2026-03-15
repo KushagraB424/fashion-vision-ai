@@ -1,50 +1,72 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import axios from "axios";
 
 function App() {
 
   const [image, setImage] = useState(null);
   const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const canvasRef = useRef(null);
 
-  const uploadImage = async (e) => {
-    try {
+  const drawBoxes = (img, detections) => {
 
-      const file = e.target.files[0];
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
 
-      if (!file) return;
+    canvas.width = img.width;
+    canvas.height = img.height;
 
-      setImage(URL.createObjectURL(file));
-      setLoading(true);
+    ctx.drawImage(img, 0, 0);
 
-      const formData = new FormData();
-      formData.append("file", file);
+    ctx.strokeStyle = "red";
+    ctx.lineWidth = 3;
+    ctx.font = "16px Arial";
+    ctx.fillStyle = "red";
 
-      const response = await axios.post(
-        "https://ideal-chainsaw-97xxrj4jx5xp2x646-8000.app.github.dev/analyze",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data"
-          },
-          timeout: 60000
-        }
+    detections.forEach(item => {
+
+      const [x1, y1, x2, y2] = item.bbox;
+
+      ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+
+      ctx.fillText(
+        `${item.color} ${item.type}`,
+        x1,
+        y1 - 5
       );
 
-      console.log("API response:", response.data);
+    });
 
-      setResults(response.data.items || []);
-      setLoading(false);
-
-    } catch (error) {
-
-      console.error("Upload error:", error);
-
-      alert("Upload failed. Check console for details.");
-
-      setLoading(false);
-    }
   };
+
+
+  const uploadImage = async (e) => {
+
+    const file = e.target.files[0];
+
+    if (!file) return;
+
+    const imageURL = URL.createObjectURL(file);
+    setImage(imageURL);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await axios.post(
+      "https://ideal-chainsaw-97xxrj4jx5xp2x646-8000.app.github.dev/analyze",
+      formData
+    );
+
+    setResults(response.data.items);
+
+    const img = new Image();
+    img.src = imageURL;
+
+    img.onload = () => {
+      drawBoxes(img, response.data.items);
+    };
+
+  };
+
 
   return (
     <div style={{ padding: "40px", fontFamily: "Arial" }}>
@@ -53,43 +75,22 @@ function App() {
 
       <input type="file" onChange={uploadImage} />
 
-      {image && (
-        <div style={{ marginTop: "20px" }}>
-          <h3>Uploaded Image</h3>
-          <img src={image} alt="preview" width="400" />
-        </div>
-      )}
+      <h2>Detected Image</h2>
 
-      {loading && (
-        <p>Processing image...</p>
-      )}
+      <canvas ref={canvasRef}></canvas>
 
       <h2>Detected Items</h2>
 
       {results.map((item, index) => (
-        <div
-          key={index}
-          style={{
-            border: "1px solid gray",
-            margin: "10px",
-            padding: "10px",
-            borderRadius: "8px"
-          }}
-        >
+        <div key={index} style={{border:"1px solid gray", margin:"10px", padding:"10px"}}>
 
           <p>
-            <strong>
-              {item.color} {item.type}
-            </strong>
+            <strong>{item.color} {item.type}</strong>
           </p>
 
-          {item.products && item.products.map((p, i) => (
+          {item.products.map((p, i) => (
             <div key={i}>
-              <a
-                href={p.link}
-                target="_blank"
-                rel="noreferrer"
-              >
+              <a href={p.link} target="_blank" rel="noreferrer">
                 {p.name}
               </a>
             </div>
