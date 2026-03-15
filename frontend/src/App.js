@@ -1,164 +1,140 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import axios from "axios";
+import "./App.css";
 
 function App() {
 
   const [image, setImage] = useState(null);
   const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const canvasRef = useRef(null);
+  const API =
+    process.env.REACT_APP_API_URL || "http://localhost:8000";
 
   const uploadImage = async (file) => {
 
     const formData = new FormData();
     formData.append("file", file);
 
+    setLoading(true);
+
     try {
 
       const response = await axios.post(
-        "https://cuddly-space-winner-4jrr5w9wrq6gc9wq-8000.app.github.dev/analyze",
+        API + "/analyze",
         formData
       );
 
-      console.log("Backend response:", response.data);
-
-      if (!response.data || !response.data.items) {
-        alert("Backend returned invalid response");
-        return;
-      }
-
-      setItems(response.data.items);
-
-      drawBoxes(file, response.data.items);
+      setItems(response.data.items || []);
 
     } catch (err) {
 
-      console.error("UPLOAD FAILED:", err);
-      alert("Upload failed. Check console.");
+      console.error(err);
+      alert("Upload failed");
 
     }
 
+    setLoading(false);
   };
 
-  const drawBoxes = (file, detections) => {
-
-    const img = new Image();
-
-    img.onload = () => {
-
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext("2d");
-
-      canvas.width = img.width;
-      canvas.height = img.height;
-
-      ctx.drawImage(img, 0, 0);
-
-      detections.forEach(item => {
-
-        const [x1, y1, x2, y2] = item.bbox;
-
-        ctx.strokeStyle = "red";
-        ctx.lineWidth = 3;
-
-        ctx.strokeRect(
-          x1,
-          y1,
-          x2 - x1,
-          y2 - y1
-        );
-
-        ctx.fillStyle = "red";
-        ctx.font = "18px Arial";
-
-        ctx.fillText(
-          `${item.color} ${item.type}`,
-          x1,
-          y1 - 5
-        );
-
-      });
-
-    };
-
-    img.src = URL.createObjectURL(file);
-
-  };
-
-  const handleFileChange = (event) => {
+  const handleUpload = (event) => {
 
     const file = event.target.files[0];
-
     if (!file) return;
 
-    setImage(file);
-
+    setImage(URL.createObjectURL(file));
     uploadImage(file);
-
   };
 
   return (
-    <div style={{ padding: "30px", fontFamily: "Arial" }}>
+
+    <div className="container">
 
       <h1>Fashion Vision AI</h1>
+      <p>Upload an image to detect clothing items</p>
 
-      <input
-        type="file"
-        onChange={handleFileChange}
-      />
+      <div className="upload-box">
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleUpload}
+        />
+      </div>
 
-      <h2>Detected Image</h2>
+      {loading && <p className="loading">Analyzing image...</p>}
 
-      <canvas ref={canvasRef} />
+      {image && (
 
-      <h2>Detected Items</h2>
+        <div className="image-container">
 
-      {items.map((item, index) => (
+          <img src={image} alt="preview" />
 
-        <div
-          key={index}
-          style={{
-            border: "1px solid #ccc",
-            padding: "10px",
-            marginBottom: "10px"
-          }}
-        >
+          {items.map((item, index) => {
 
-          <h3>{item.color} {item.type}</h3>
+            if (!item.bbox) return null;
 
-          <a
-            href={`https://www.amazon.in/s?k=${item.color}+${item.type}`}
-            target="_blank"
-            rel="noreferrer"
-          >
-            Search Amazon
-          </a>
+            const [x1, y1, x2, y2] = item.bbox;
 
-          <br/>
+            return (
 
-          <a
-            href={`https://www.myntra.com/${item.color}-${item.type}`}
-            target="_blank"
-            rel="noreferrer"
-          >
-            Search Myntra
-          </a>
+              <div
+                key={index}
+                className="bbox"
+                style={{
+                  left: x1,
+                  top: y1,
+                  width: x2 - x1,
+                  height: y2 - y1
+                }}
+              >
 
-          <br/>
+                <span>
+                  {item.color} {item.type}
+                </span>
 
-          <a
-            href={`https://www.google.com/search?q=${item.color}+${item.type}&tbm=shop`}
-            target="_blank"
-            rel="noreferrer"
-          >
-            Google Shopping
-          </a>
+              </div>
+
+            );
+          })}
 
         </div>
 
-      ))}
+      )}
+
+      <div className="results">
+
+        {items.map((item, index) => (
+
+          <div className="card" key={index}>
+
+            <h3>{item.color} {item.type}</h3>
+
+            <a
+              href={`https://www.amazon.in/s?k=${item.color}+${item.type}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Search Amazon
+            </a>
+
+            <br/>
+
+            <a
+              href={`https://www.myntra.com/${item.color}-${item.type}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Search Myntra
+            </a>
+
+          </div>
+
+        ))}
+
+      </div>
 
     </div>
+
   );
 }
 

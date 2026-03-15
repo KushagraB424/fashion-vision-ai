@@ -1,36 +1,26 @@
 from ultralytics import YOLO
-import numpy as np
 
 model = YOLO("yolov8n-seg.pt")
 
 def segment(image):
 
-    results = model(image)
+    results = model(image)[0]
 
     detections = []
 
-    for r in results:
+    for box in results.boxes:
 
-        if r.masks is None:
+        cls = int(box.cls[0])
+        label = model.names[cls]
+
+        if label != "person":
             continue
 
-        boxes = r.boxes.xyxy.cpu().numpy()
-        classes = r.boxes.cls.cpu().numpy()
-        masks = r.masks.xy
+        x1, y1, x2, y2 = map(int, box.xyxy[0])
 
-        for box, cls, polygon in zip(boxes, classes, masks):
-
-            label = model.names[int(cls)]
-
-            if label != "person":
-                continue
-
-            x1, y1, x2, y2 = map(int, box)
-
-            detections.append({
-                "bbox": [x1, y1, x2, y2],
-                "polygon": polygon.tolist(),
-                "type": "person"
-            })
+        detections.append({
+            "type": "person",
+            "bbox": [x1, y1, x2, y2]
+        })
 
     return detections

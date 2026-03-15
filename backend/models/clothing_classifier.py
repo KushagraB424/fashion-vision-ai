@@ -1,13 +1,19 @@
 import cv2
+import torch
+import open_clip
 import numpy as np
-from fashion_clip.fashion_clip import FashionCLIP
-from sklearn.metrics.pairwise import cosine_similarity
+from PIL import Image
 
-# Load model once
-fclip = FashionCLIP("fashion-clip")
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
+model, _, preprocess = open_clip.create_model_and_transforms(
+    "ViT-B-32", pretrained="laion2b_s34b_b79k"
+)
+
+model = model.to(device)
 
 labels = [
-    "t-shirt",
+    "t shirt",
     "shirt",
     "jacket",
     "coat",
@@ -25,29 +31,31 @@ labels = [
     "boots"
 ]
 
-# encode label embeddings
-text_embeddings = fclip.encode_text(labels, batch_size=32)
+text_tokens = open_clip.tokenize(labels).to(device)
+
+with torch.no_grad():
+    text_features = model.encode_text(text_tokens)
+    text_features /= text_features.norm(dim=-1, keepdim=True)
 
 
 def classify_clothing(image):
 
     try:
-        # BGR → RGB
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image = Image.fromarray(image)
 
-        # resize for CLIP
-        image = cv2.resize(image, (224, 224))
+        image = preprocess(image).unsqueeze(0).to(device)
 
-        # image embedding
-        image_embedding = fclip.encode_images([image], batch_size=1)
+        with torch.no_grad():
+            image_features = model.encode_image(image)
+            image_features /= image_features.norm(dim=-1, keepdim=True)
 
-        # cosine similarity
-        sims = cosine_similarity(image_embedding, text_embeddings)
+            similarity = (100 * image_features @ text_features.T).softmax(dim=-1)
 
-        idx = np.argmax(sims)
+        idx = similarity.argmax().item()
 
         return labels[idx]
 
     except Exception as e:
-        print("FashionCLIP error:", e)
+        print("CLIP error:", e)
         return "unknown"
