@@ -7,7 +7,7 @@ function App() {
   const [results, setResults] = useState([]);
   const canvasRef = useRef(null);
 
-  const drawBoxes = (img, detections) => {
+  const drawMasks = (img, detections) => {
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
@@ -17,22 +17,28 @@ function App() {
 
     ctx.drawImage(img, 0, 0);
 
-    ctx.strokeStyle = "red";
-    ctx.lineWidth = 3;
-    ctx.font = "16px Arial";
-    ctx.fillStyle = "red";
-
     detections.forEach(item => {
 
-      const [x1, y1, x2, y2] = item.bbox;
+      const poly = item.polygon;
 
-      ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+      ctx.beginPath();
 
-      ctx.fillText(
-        `${item.color} ${item.type}`,
-        x1,
-        y1 - 5
-      );
+      poly.forEach((point, index) => {
+
+        const [x, y] = point;
+
+        if (index === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+
+      });
+
+      ctx.closePath();
+
+      ctx.fillStyle = "rgba(255,0,0,0.25)";
+      ctx.fill();
+
+      ctx.strokeStyle = "red";
+      ctx.stroke();
 
     });
 
@@ -62,7 +68,7 @@ function App() {
     img.src = imageURL;
 
     img.onload = () => {
-      drawBoxes(img, response.data.items);
+      drawMasks(img, response.data.items);
     };
 
   };

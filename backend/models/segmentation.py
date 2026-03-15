@@ -1,6 +1,6 @@
 from ultralytics import YOLO
+import numpy as np
 
-# Using segmentation model
 model = YOLO("yolov8n-seg.pt")
 
 def segment(image):
@@ -11,30 +11,26 @@ def segment(image):
 
     for r in results:
 
+        if r.masks is None:
+            continue
+
         boxes = r.boxes.xyxy.cpu().numpy()
         classes = r.boxes.cls.cpu().numpy()
+        masks = r.masks.xy
 
-        for box, cls in zip(boxes, classes):
-
-            x1, y1, x2, y2 = map(int, box)
+        for box, cls, polygon in zip(boxes, classes, masks):
 
             label = model.names[int(cls)]
 
-            # Only keep clothing related detections
-            clothing_classes = [
-                "person",
-                "handbag",
-                "backpack",
-                "tie",
-                "shoe"
-            ]
-
-            if label not in clothing_classes:
+            if label != "person":
                 continue
+
+            x1, y1, x2, y2 = map(int, box)
 
             detections.append({
                 "bbox": [x1, y1, x2, y2],
-                "type": label
+                "polygon": polygon.tolist(),
+                "type": "person"
             })
 
     return detections

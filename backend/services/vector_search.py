@@ -1,36 +1,34 @@
-import faiss
-import numpy as np
+import urllib.parse
 
-# dimension of CLIP embeddings
-dimension = 512
+def search_similar(embedding, item_type=None, color=None):
 
-# FAISS index
-index = faiss.IndexFlatL2(dimension)
+    if item_type is None:
+        item_type = "clothing"
 
-# store product metadata
-product_db = []
+    if color is None:
+        color = ""
 
+    query = f"{color} {item_type}".strip()
 
-def add_product(embedding, metadata):
+    encoded = urllib.parse.quote(query)
 
-    embedding = np.array([embedding]).astype("float32")
+    amazon = f"https://www.amazon.in/s?k={encoded}"
+    myntra = f"https://www.myntra.com/{encoded.replace(' ', '-')}"
+    google = f"https://www.google.com/search?tbm=shop&q={encoded}"
 
-    index.add(embedding)
+    products = [
+        {
+            "name": f"Search Amazon for {query}",
+            "link": amazon
+        },
+        {
+            "name": f"Search Myntra for {query}",
+            "link": myntra
+        },
+        {
+            "name": f"Google Shopping results for {query}",
+            "link": google
+        }
+    ]
 
-    product_db.append(metadata)
-
-
-def search_similar(embedding, k=3):
-
-    embedding = np.array([embedding]).astype("float32")
-
-    distances, indices = index.search(embedding, k)
-
-    results = []
-
-    for i in indices[0]:
-
-        if i < len(product_db):
-            results.append(product_db[i])
-
-    return results
+    return products
