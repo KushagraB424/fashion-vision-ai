@@ -1,54 +1,53 @@
-import torch
-import open_clip
-from PIL import Image
 import cv2
+import numpy as np
+from fashion_clip.fashion_clip import FashionCLIP
+from sklearn.metrics.pairwise import cosine_similarity
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
-
-model, _, preprocess = open_clip.create_model_and_transforms(
-    "ViT-B-32",
-    pretrained="laion2b_s34b_b79k"
-)
-
-model = model.to(device)
+# Load model once
+fclip = FashionCLIP("fashion-clip")
 
 labels = [
-    "t shirt",
-    "polo shirt",
-    "dress shirt",
+    "t-shirt",
+    "shirt",
     "jacket",
-    "hoodie",
     "coat",
-    "jeans",
+    "hoodie",
+    "sweater",
+    "blazer",
     "pants",
+    "trousers",
+    "jeans",
     "shorts",
     "skirt",
     "dress",
     "sneakers",
-    "boots",
-    "sandals",
+    "shoes",
+    "boots"
 ]
 
-text_tokens = open_clip.tokenize(labels).to(device)
-
-with torch.no_grad():
-    text_features = model.encode_text(text_tokens)
-    text_features /= text_features.norm(dim=-1, keepdim=True)
+# encode label embeddings
+text_embeddings = fclip.encode_text(labels, batch_size=32)
 
 
 def classify_clothing(image):
 
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    pil = Image.fromarray(image)
+    try:
+        # BGR → RGB
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-    img = preprocess(pil).unsqueeze(0).to(device)
+        # resize for CLIP
+        image = cv2.resize(image, (224, 224))
 
-    with torch.no_grad():
-        image_features = model.encode_image(img)
-        image_features /= image_features.norm(dim=-1, keepdim=True)
+        # image embedding
+        image_embedding = fclip.encode_images([image], batch_size=1)
 
-        similarity = (100.0 * image_features @ text_features.T).softmax(dim=-1)
+        # cosine similarity
+        sims = cosine_similarity(image_embedding, text_embeddings)
 
-    index = similarity.argmax().item()
+        idx = np.argmax(sims)
 
-    return labels[index]
+        return labels[idx]
+
+    except Exception as e:
+        print("FashionCLIP error:", e)
+        return "unknown"

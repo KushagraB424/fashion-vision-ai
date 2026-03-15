@@ -5,6 +5,7 @@ import cv2
 import logging
 
 from backend.models.segmentation import segment
+from backend.models.pose_detector import detect_pose
 from backend.models.color_detector import detect_color
 from backend.models.embedding_model import get_embedding
 from backend.models.clothing_classifier import classify_clothing
@@ -16,8 +17,7 @@ logging.basicConfig(level=logging.INFO)
 
 app = FastAPI()
 
-
-# Enable CORS (important for Codespaces frontend)
+# Enable CORS (needed for Codespaces frontend)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -44,34 +44,45 @@ async def analyze(file: UploadFile = File(...)):
     npimg = np.frombuffer(contents, np.uint8)
     image = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
 
-    # Person segmentation
+    # Run person segmentation (mask + bbox)
     detections = segment(image)
 
-    # Split person into clothing regions
+    # Pose detection for body keypoints
+    poses = detect_pose(image)
+
     expanded = []
 
     for d in detections:
-
-        x1, y1, x2, y2 = d["bbox"]
-        height = y2 - y1
-
-        expanded.append({
-            "bbox": [x1, y1, x2, y1 + int(height * 0.35)],
-            "type": "shirt",
-            "polygon": d.get("polygon", None)
-        })
-
-        expanded.append({
-            "bbox": [x1, y1 + int(height * 0.35), x2, y1 + int(height * 0.75)],
-            "type": "pants",
-            "polygon": d.get("polygon", None)
-        })
-
-        expanded.append({
-            "bbox": [x1, y1 + int(height * 0.75), x2, y2],
-            "type": "shoes",
-            "polygon": d.get("polygon", None)
-        })
+    
+        if d["type"] != "person":
+            expanded.append(d)
+            continue
+    
+        try:
+            x1, y1, x2, y2 = d["bbox"]
+            height = y2 - y1
+    
+            # safe split
+            shirt_y = y1 + int(height * 0.30)
+            pants_y = y1 + int(height * 0.65)
+    
+            expanded.append({
+                "bbox": [x1, y1, x2, shirt_y],
+                "type": "shirt"
+            })
+    
+            expanded.append({
+                "bbox": [x1, shirt_y, x2, pants_y],
+                "type": "pants"
+            })
+    
+            expanded.append({
+                "bbox": [x1, pants_y, x2, y2],
+                "type": "shoes"
+            })
+    
+        except Exception as e:
+            logging.warning(f"Person split failed: {e}")
 
     detections = expanded
 
@@ -92,17 +103,16 @@ async def analyze(file: UploadFile = File(...)):
         # Color detection
         color = detect_color(crop)
 
-        # Embedding
+        # Embedding generation
         embedding = get_embedding(crop)
 
-        # Product search
+        # Vector search
         products = search_similar(embedding, clothing_type, color)
 
         items.append({
             "type": clothing_type,
             "color": color,
             "bbox": [x1, y1, x2, y2],
-            "polygon": d["polygon"],
             "products": products
         })
 
