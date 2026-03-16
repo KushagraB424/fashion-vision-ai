@@ -1,40 +1,61 @@
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background: #f5f6fa;
+  font-family: 'Segoe UI', sans-serif;
+  background-image: url("https://images.unsplash.com/photo-1512436991641-6745cdb1723f");
+  background-size: cover;
+  background-position: center;
+  min-height: 100vh;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: -1;
 }
 
 .container {
   text-align: center;
-  max-width: 900px;
-  margin: auto;
+  padding: 40px;
+  color: white;
 }
 
 h1 {
-  margin-top: 30px;
+  font-size: 46px;
+  margin-bottom: 10px;
 }
 
 .upload-box {
-  border: 2px dashed #888;
-  padding: 40px;
-  margin: 30px;
-  cursor: pointer;
-  border-radius: 10px;
-  background: white;
+  margin: 30px auto;
+  padding: 25px;
+  border-radius: 12px;
+  border: 2px dashed rgba(255,255,255,0.4);
+  width: 300px;
+  backdrop-filter: blur(10px);
 }
 
-.upload-box:hover {
-  background: #f0f0f0;
+.workspace {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin-top: 40px;
+}
+
+/* IMAGE SIDE */
+
+.image-panel {
+  position: relative;
 }
 
 .image-container {
   position: relative;
-  display: inline-block;
 }
 
 .image-container img {
-  max-width: 500px;
-  border-radius: 10px;
+  max-width: 450px;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
 }
 
 .bbox {
@@ -49,35 +70,42 @@ h1 {
   padding: 2px 6px;
 }
 
-.results {
-  margin-top: 40px;
+/* RESULTS SIDE */
+
+.results-panel {
   display: flex;
-  justify-content: center;
-  gap: 20px;
+  flex-direction: column;
+  gap: 15px;
+  width: 220px;
 }
 
 .card {
-  background: white;
-  padding: 20px;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(12px);
   border-radius: 10px;
-  box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
+  padding: 16px;
+  transition: 0.3s;
 }
 
-.card a {
+.card:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+.links {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 10px;
+}
+
+.links a {
+  color: #8ecfff;
   text-decoration: none;
-  color: #0077ff;
 }
 
-.loader {
-  margin: 20px auto;
-  border: 6px solid #eee;
-  border-top: 6px solid #0077ff;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  animation: spin 1s linear infinite;
+.links a:hover {
+  text-decoration: underline;
 }
 
-@keyframes spin {
-  100% { transform: rotate(360deg); }
+.loading {
+  margin-top: 10px;
 }

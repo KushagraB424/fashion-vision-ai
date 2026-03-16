@@ -8,8 +8,7 @@ function App() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const API =
-    process.env.REACT_APP_API_URL || "http://localhost:8000";
+  const API = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
   const uploadImage = async (file) => {
 
@@ -20,10 +19,7 @@ function App() {
 
     try {
 
-      const response = await axios.post(
-        API + "/analyze",
-        formData
-      );
+      const response = await axios.post(API + "/analyze", formData);
 
       setItems(response.data.items || []);
 
@@ -40,14 +36,15 @@ function App() {
   const handleUpload = (event) => {
 
     const file = event.target.files[0];
+
     if (!file) return;
 
     setImage(URL.createObjectURL(file));
+
     uploadImage(file);
   };
 
   return (
-
     <div className="container">
 
       <h1>Fashion Vision AI</h1>
@@ -63,78 +60,89 @@ function App() {
 
       {loading && <p className="loading">Analyzing image...</p>}
 
-      {image && (
+      <div className="workspace">
 
-        <div className="image-container">
+        {/* LEFT SIDE IMAGE */}
 
-          <img src={image} alt="preview" />
+        <div className="image-panel">
 
-          {items.map((item, index) => {
+          {image && (
 
-            if (!item.bbox) return null;
+            <div className="image-container">
 
-            const [x1, y1, x2, y2] = item.bbox;
+              <img src={image} alt="preview" />
 
-            return (
+              {items.map((item, index) => {
 
-              <div
-                key={index}
-                className="bbox"
-                style={{
-                  left: x1,
-                  top: y1,
-                  width: x2 - x1,
-                  height: y2 - y1
-                }}
-              >
+                if (!item.bbox) return null;
 
-                <span>
-                  {item.color} {item.type}
-                </span>
+                const [x1, y1, x2, y2] = item.bbox;
 
-              </div>
+                return (
+                  <div
+                    key={index}
+                    className="bbox"
+                    style={{
+                      left: x1,
+                      top: y1,
+                      width: x2 - x1,
+                      height: y2 - y1
+                    }}
+                  >
+                    <span>
+                      {item.color} {item.type}
+                    </span>
+                  </div>
+                );
 
-            );
-          })}
+              })}
+
+            </div>
+
+          )}
 
         </div>
 
-      )}
 
-      <div className="results">
+        {/* RIGHT SIDE RESULTS */}
 
-        {items.map((item, index) => (
+        <div className="results-panel">
 
-          <div className="card" key={index}>
+          {items.map((item, index) => (
 
-            <h3>{item.color} {item.type}</h3>
+            <div className="card" key={index}>
 
-            <a
-              href={`https://www.amazon.in/s?k=${item.color}+${item.type}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Search Amazon
-            </a>
+              <h3>{item.color} {item.type}</h3>
 
-            <br/>
+              <div className="links">
 
-            <a
-              href={`https://www.myntra.com/${item.color}-${item.type}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Search Myntra
-            </a>
+                <a
+                  href={`https://www.amazon.in/s?k=${item.color}+${item.type}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Amazon
+                </a>
 
-          </div>
+                <a
+                  href={`https://www.myntra.com/${item.color}-${item.type}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Myntra
+                </a>
 
-        ))}
+              </div>
+
+            </div>
+
+          ))}
+
+        </div>
 
       </div>
 
     </div>
-
   );
 }
 
