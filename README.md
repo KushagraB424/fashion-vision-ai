@@ -1,4 +1,4 @@
-# Fashion Vision AI
+<img width="1132" height="687" alt="image" src="https://github.com/user-attachments/assets/3a5d531e-dcb5-400b-99be-d0188fd356de" /># Fashion Vision AI
 
 A full-stack, deep learning-driven web application designed to seamlessly bridge the gap between computer vision and visual commerce through automated clothing detection.
 
@@ -47,13 +47,11 @@ cd fashion-vision-ai
 
 ### 2. Configure the Backend API
 
-cd backend
 pip install -r requirements.txt
-uvicorn api.main:app --reload
+python -m uvicorn backend.api.main:app --host 0.0.0.0 --port 8000
 
 ### 3. Initialize the Frontend Client
 
-bash
 cd frontend
 npm install
 npm start
@@ -92,6 +90,7 @@ json
 3. **Feature Extraction:** The system isolates detected regions and extracts the dominant color properties.
 4. **Data Serialization:** The backend constructs and returns a structured JSON payload of the identified garments.
 5. **Display & Routing:** The frontend maps the returned data to the UI, presenting the user with categorized items and direct e-commerce search links.
+<img width="1132" height="687" alt="image" src="https://github.com/user-attachments/assets/93989854-711c-43fa-a652-35cc296d1890" />
 
 ---
 
