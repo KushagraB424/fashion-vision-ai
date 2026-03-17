@@ -41,26 +41,23 @@ Fashion Vision AI is an advanced computer vision platform that leverages state-o
 
 ### 1. Initialize the Repository
 
-\`\`\`bash
+bash
 git clone https://github.com/KushagraB424/fashion-vision-ai.git
 cd fashion-vision-ai
-\`\`\`
 
 ### 2. Configure the Backend API
 
-\`\`\`bash
 cd backend
 pip install -r requirements.txt
 uvicorn api.main:app --reload
-\`\`\`
 
 ### 3. Initialize the Frontend Client
 
-\`\`\`bash
+bash
 cd frontend
 npm install
 npm start
-\`\`\`
+
 
 ---
 
@@ -72,7 +69,7 @@ npm start
 
 **Response Schema:**
 
-\`\`\`json
+json
 {
   "items": [
     {
@@ -85,7 +82,6 @@ npm start
     }
   ]
 }
-\`\`\`
 
 ---
 
