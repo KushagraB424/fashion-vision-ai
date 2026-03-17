@@ -4,12 +4,6 @@ A full-stack, deep learning-driven web application designed to seamlessly bridge
 
 ---
 
-## Live Demonstration
-
-[Insert Deployed Application Link Here]
-
----
-
 ## Executive Overview
 
 Fashion Vision AI is an advanced computer vision platform that leverages state-of-the-art deep learning models to autonomously identify apparel within user-uploaded images. By integrating precise object localization with algorithmic color extraction, the system transforms static images into interactive, highly relevant e-commerce search vectors. 
@@ -42,29 +36,6 @@ Fashion Vision AI is an advanced computer vision platform that leverages state-o
 
 ---
 
-## Repository Structure
-
-\`\`\`text
-fashion-vision-ai/
-│
-├── backend/
-│   ├── api/
-│   │   └── main.py
-│   ├── models/
-│   │   ├── segmentation.py
-│   │   ├── color_detector.py
-│   │   └── clothing_classifier.py
-│   └── requirements.txt
-│
-├── frontend/
-│   ├── src/
-│   │   └── App.js
-│   └── package.json
-│
-└── README.md
-\`\`\`
-
----
 
 ## Environment Setup and Deployment
 
