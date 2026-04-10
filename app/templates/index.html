@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fashion AI — Segmentation & Shopping</title>
+    <meta name="description" content="Upload a fashion image to segment clothing items and find shopping links using AI.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* ═══════════════════════════════════════════════
+           DESIGN SYSTEM — Modern Minimalist
+           ═══════════════════════════════════════════════ */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:            #FAFAFA;
+            --surface:       #FFFFFF;
+            --text:          #18181B;
+            --text-secondary:#71717A;
+            --text-muted:    #A1A1AA;
+            --accent:        #09090B;
+            --interactive:   #10B981;
+            --interactive-hover: #059669;
+            --border:        #E4E4E7;
+            --border-light:  #F4F4F5;
+            --shadow-sm:     0 1px 2px rgba(0,0,0,0.04);
+            --shadow:        0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-md:     0 4px 6px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.03);
+            --shadow-lg:     0 10px 25px rgba(0,0,0,0.06), 0 4px 10px rgba(0,0,0,0.04);
+            --shadow-xl:     0 20px 50px rgba(0,0,0,0.08), 0 8px 20px rgba(0,0,0,0.04);
+            --radius:        16px;
+            --radius-sm:     10px;
+            --radius-xs:     6px;
+            --font:          'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --transition:    0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* ═══════════════ LAYOUT ═══════════════ */
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+        }
+
+        /* ═══════════════ HEADER ═══════════════ */
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            padding-top: 1rem;
+        }
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .logo-icon {
+            width: 36px; height: 36px;
+            background: var(--accent);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 1.1rem;
+        }
+        .logo-text {
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+        }
+        header h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            letter-spacing: -1.5px;
+            line-height: 1.1;
+            color: var(--accent);
+        }
+        header p {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            margin-top: 0.6rem;
+            max-width: 520px;
+            margin-inline: auto;
+            line-height: 1.6;
+        }
+
+        /* ═══════════════ GLASS CARD ═══════════════ */
+        .glass-card {
+            background: rgba(255,255,255,0.72);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            transition: box-shadow var(--transition), border-color var(--transition);
+        }
+        .glass-card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        /* ═══════════════ UPLOAD SECTION ═══════════════ */
+        .upload-card {
+            padding: 2.5rem;
+            text-align: center;
+            position: relative;
+        }
+        .upload-card.drag-over {
+            border-color: var(--interactive);
+            box-shadow: 0 0 0 3px rgba(16,185,129,0.12), var(--shadow-md);
+        }
+
+        .upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-sm);
+            padding: 3rem 2rem;
+            cursor: pointer;
+            transition: border-color var(--transition), background var(--transition);
+        }
+        .upload-zone:hover,
+        .upload-zone.drag-over {
+            border-color: var(--interactive);
+            background: rgba(16,185,129,0.03);
+        }
+        .upload-icon {
+            width: 56px; height: 56px;
+            margin: 0 auto 1rem;
+            background: var(--border-light);
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            transition: background var(--transition), transform var(--transition);
+        }
+        .upload-zone:hover .upload-icon {
+            background: rgba(16,185,129,0.08);
+            transform: translateY(-2px);
+        }
+        .upload-icon svg { width: 26px; height: 26px; color: var(--text-secondary); }
+        .upload-zone h3 { font-size: 1.1rem; font-weight: 600; color: var(--text); }
+        .upload-zone p { color: var(--text-muted); font-size: 0.88rem; margin-top: 0.35rem; }
+
+        #file-input { display: none; }
+
+        /* Preview */
+        .preview-container { margin-top: 1.5rem; display: none; }
+        .preview-container.show { display: block; animation: fadeIn 0.3s ease; }
+        .preview-img {
+            max-height: 340px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            object-fit: contain;
+            background: var(--border-light);
+        }
+        .file-name {
+            margin-top: 0.5rem; font-size: 0.82rem; color: var(--text-muted);
+        }
+
+        /* ═══════════════ BUTTONS ═══════════════ */
+        .btn-row { display: flex; gap: 0.75rem; justify-content: center; margin-top: 1.8rem; flex-wrap: wrap; }
+
+        .btn {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            padding: 0.7rem 1.6rem;
+            border: none; border-radius: 50px;
+            font-family: var(--font); font-size: 0.9rem; font-weight: 600;
+            cursor: pointer;
+            transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .btn-primary {
+            background: var(--accent); color: #fff;
+            box-shadow: var(--shadow-sm);
+        }
+        .btn-primary:hover:not(:disabled) {
+            box-shadow: var(--shadow-md);
+            background: #27272A;
+        }
+
+        .btn-secondary {
+            background: var(--surface); color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--border-light);
+        }
+
+        .btn-success {
+            background: var(--interactive); color: #fff;
+            box-shadow: 0 2px 8px rgba(16,185,129,0.2);
+        }
+        .btn-success:hover:not(:disabled) {
+            background: var(--interactive-hover);
+            box-shadow: 0 4px 12px rgba(16,185,129,0.25);
+        }
+
+        /* ═══════════════ SPINNER ═══════════════ */
+        .spinner {
+            display: none; margin: 2rem auto;
+            width: 36px; height: 36px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        .spinner.show { display: block; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .status-text { text-align: center; color: var(--text-secondary); font-size: 0.88rem; margin-top: 0.5rem; }
+
+        /* ═══════════════ RESULTS ═══════════════ */
+        .results-section { margin-top: 2.5rem; display: none; }
+        .results-section.show { display: block; animation: fadeSlideUp 0.4s ease; }
+
+        .results-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1.2rem;
+        }
+        .results-header h2 { font-size: 1.35rem; font-weight: 700; }
+        .results-meta { font-size: 0.82rem; color: var(--text-muted); }
+
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        /* ═══════════════ ITEM CARD ═══════════════ */
+        .item-card {
+            overflow: hidden;
+            transition: transform var(--transition), box-shadow var(--transition);
+        }
+        .item-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .item-card-img {
+            width: 100%; height: 200px; object-fit: contain;
+            background: var(--border-light);
+            padding: 0.75rem;
+        }
+
+        .item-card-body { padding: 1rem 1.2rem 1.2rem; }
+
+        .item-label {
+            display: inline-block;
+            padding: 0.25rem 0.7rem;
+            background: var(--accent);
+            color: #fff;
+            border-radius: 50px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        .item-attrs {
+            display: flex; gap: 0.5rem; margin-top: 0.65rem; flex-wrap: wrap;
+        }
+        .attr-chip {
+            padding: 0.2rem 0.55rem;
+            background: var(--border-light);
+            border: 1px solid var(--border);
+            border-radius: 50px;
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* Confidence bar */
+        .item-conf { margin-top: 0.65rem; }
+        .conf-label {
+            font-size: 0.78rem; color: var(--text-secondary); font-weight: 500;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .conf-value { font-weight: 700; font-variant-numeric: tabular-nums; }
+        .conf-bar {
+            height: 6px; border-radius: 3px; margin-top: 0.3rem;
+            background: var(--border-light);
+            overflow: hidden;
+        }
+        .conf-fill {
+            height: 100%; border-radius: 3px;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .conf-fill.high   { background: var(--interactive); }
+        .conf-fill.medium { background: #F59E0B; }
+        .conf-fill.low    { background: #EF4444; }
+
+        /* ═══════════════ ERROR ═══════════════ */
+        .error-msg {
+            display: none; margin-top: 1.5rem; padding: 0.85rem 1rem;
+            background: #FEF2F2;
+            border: 1px solid #FECACA;
+            border-radius: var(--radius-sm);
+            color: #DC2626;
+            font-size: 0.88rem;
+            font-weight: 500;
+        }
+        .error-msg.show { display: block; animation: fadeIn 0.2s ease; }
+
+        /* ═══════════════ FOOTER ═══════════════ */
+        footer {
+            text-align: center;
+            margin-top: 3rem; padding: 1.5rem;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            border-top: 1px solid var(--border);
+        }
+        footer span { color: var(--text-secondary); font-weight: 500; }
+
+        /* ═══════════════ CHAT WIDGET ═══════════════ */
+
+        /* FAB Button */
+        .chat-fab {
+            position: fixed;
+            bottom: 1.5rem; right: 1.5rem;
+            width: 56px; height: 56px;
+            background: var(--interactive);
+            color: #fff;
+            border: none; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(16,185,129,0.3);
+            transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
+            z-index: 1000;
+        }
+        .chat-fab:hover {
+            transform: scale(1.08);
+            box-shadow: 0 6px 24px rgba(16,185,129,0.35);
+            background: var(--interactive-hover);
+        }
+        .chat-fab svg { width: 24px; height: 24px; }
+        .chat-fab .badge {
+            position: absolute; top: -2px; right: -2px;
+            width: 16px; height: 16px;
+            background: #EF4444; border: 2px solid var(--bg);
+            border-radius: 50%;
+            display: none;
+        }
+        .chat-fab .badge.show { display: block; animation: pulse 1.5s infinite; }
+
+        /* Chat Panel */
+        .chat-panel {
+            position: fixed;
+            bottom: 5.5rem; right: 1.5rem;
+            width: 400px;
+            max-height: 520px;
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-xl);
+            z-index: 999;
+            display: flex; flex-direction: column;
+            transform: translateY(10px) scale(0.95);
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                        opacity 0.25s ease;
+        }
+        .chat-panel.open {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .chat-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.9rem 1.1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .chat-header-left {
+            display: flex; align-items: center; gap: 0.6rem;
+        }
+        .chat-avatar {
+            width: 32px; height: 32px;
+            background: var(--interactive);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 0.85rem;
+        }
+        .chat-header-info h4 {
+            font-size: 0.85rem; font-weight: 700; color: var(--text);
+            line-height: 1.2;
+        }
+        .chat-header-info span {
+            font-size: 0.7rem; color: var(--interactive); font-weight: 500;
+        }
+        .chat-close {
+            background: none; border: none; cursor: pointer;
+            color: var(--text-muted); padding: 0.25rem;
+            border-radius: 6px;
+            transition: background var(--transition), color var(--transition);
+        }
+        .chat-close:hover { background: var(--border-light); color: var(--text); }
+        .chat-close svg { width: 18px; height: 18px; }
+
+        /* Messages */
+        .chat-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex; flex-direction: column; gap: 0.75rem;
+            min-height: 200px;
+            max-height: 360px;
+        }
+        .chat-body::-webkit-scrollbar { width: 4px; }
+        .chat-body::-webkit-scrollbar-track { background: transparent; }
+        .chat-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+        .chat-msg {
+            max-width: 88%;
+            padding: 0.7rem 0.9rem;
+            border-radius: 14px;
+            font-size: 0.82rem;
+            line-height: 1.55;
+            animation: fadeSlideUp 0.3s ease;
+        }
+        .chat-msg.bot {
+            align-self: flex-start;
+            background: var(--border-light);
+            color: var(--text);
+            border-bottom-left-radius: 4px;
+        }
+        .chat-msg.user {
+            align-self: flex-end;
+            background: var(--accent);
+            color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+        .chat-msg a {
+            color: var(--interactive);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .chat-msg.bot a { color: var(--interactive); }
+        .chat-msg.user a { color: #6EE7B7; }
+        .chat-msg a:hover { text-decoration: underline; }
+
+        .chat-msg strong { font-weight: 700; }
+
+        /* Typing indicator */
+        .typing-indicator {
+            display: none;
+            align-self: flex-start;
+            padding: 0.8rem 1rem;
+            background: var(--border-light);
+            border-radius: 14px;
+            border-bottom-left-radius: 4px;
+        }
+        .typing-indicator.show { display: flex; gap: 4px; align-items: center; }
+        .typing-dot {
+            width: 6px; height: 6px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            animation: typingBounce 1.2s infinite;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.15s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.3s; }
+
+        @keyframes typingBounce {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-4px); opacity: 1; }
+        }
+
+        /* Welcome state */
+        .chat-welcome {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 2rem 1rem; text-align: center;
+            color: var(--text-muted); gap: 0.5rem;
+        }
+        .chat-welcome svg { width: 40px; height: 40px; color: var(--border); }
+        .chat-welcome p { font-size: 0.82rem; max-width: 240px; }
+
+        /* ═══════════════ ANIMATIONS ═══════════════ */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* ═══════════════ RESPONSIVE ═══════════════ */
+        @media (max-width: 640px) {
+            header h1 { font-size: 2rem; }
+            .upload-card { padding: 1.5rem; }
+            .items-grid { grid-template-columns: 1fr; }
+            .chat-panel {
+                right: 0; left: 0; bottom: 0;
+                width: 100%; max-height: 70vh;
+                border-radius: var(--radius) var(--radius) 0 0;
+            }
+            .chat-fab { bottom: 1rem; right: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Header -->
+    <header>
+        <div class="logo">
+            <div class="logo-icon">✦</div>
+            <span class="logo-text">Fashion AI</span>
+        </div>
+        <h1 id="page-title">Intelligent Fashion<br>Segmentation</h1>
+        <p>Upload a fashion photo to detect clothing items, classify them, and discover shopping links — all powered by AI.</p>
+    </header>
+
+    <!-- Upload Card -->
+    <main>
+        <section class="glass-card upload-card" id="upload-card" aria-label="Image upload">
+            <div class="upload-zone" id="upload-zone" role="button" tabindex="0" aria-label="Click or drag to upload image">
+                <div class="upload-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+                    </svg>
+                </div>
+                <h3>Drop your image here</h3>
+                <p>or click to browse · JPG, PNG, WEBP</p>
+            </div>
+            <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp">
+
+            <!-- Preview -->
+            <div class="preview-container" id="preview-container">
+                <img class="preview-img" id="preview-img" alt="Preview of uploaded fashion image">
+                <div class="file-name" id="file-name"></div>
+            </div>
+
+            <!-- Actions -->
+            <div class="btn-row">
+                <button class="btn btn-primary" id="btn-analyze" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
+                    Analyze Fashion
+                </button>
+                <button class="btn btn-secondary" id="btn-clear" disabled>Clear</button>
+            </div>
+        </section>
+
+        <!-- Loading / Status -->
+        <div class="spinner" id="spinner"></div>
+        <div class="status-text" id="status-text"></div>
+
+        <!-- Error -->
+        <div class="error-msg" id="error-msg" role="alert"></div>
+
+        <!-- Results -->
+        <section class="results-section" id="results-section" aria-label="Detection results">
+            <div class="results-header">
+                <h2>Detected Items</h2>
+                <span class="results-meta" id="results-meta"></span>
+            </div>
+            <div class="items-grid" id="items-grid"></div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <span>Fashion AI</span> · Segmentation & Shopping · Powered by YOLOv8 + EfficientNet + OpenRouter
+    </footer>
+</div>
+
+<!-- ═══════════════ CHAT WIDGET ═══════════════ -->
+
+<!-- Chat FAB -->
+<button class="chat-fab" id="chat-fab" aria-label="Open shopping assistant">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155"/>
+    </svg>
+    <span class="badge" id="chat-badge"></span>
+</button>
+
+<!-- Chat Panel -->
+<aside class="chat-panel" id="chat-panel" aria-label="Shopping assistant chat">
+    <div class="chat-header">
+        <div class="chat-header-left">
+            <div class="chat-avatar">🛍️</div>
+            <div class="chat-header-info">
+                <h4>StyleBot</h4>
+                <span>● Online</span>
+            </div>
+        </div>
+        <button class="chat-close" id="chat-close" aria-label="Close chat">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+    </div>
+    <div class="chat-body" id="chat-body">
+        <div class="chat-welcome" id="chat-welcome">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/>
+            </svg>
+            <p>Upload and analyze a fashion image to get personalized shopping recommendations!</p>
+        </div>
+        <div class="typing-indicator" id="typing-indicator">
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+        </div>
+    </div>
+</aside>
+
+<script>
+(() => {
+    // ── DOM refs ──────────────────────────────────────────
+    const uploadZone     = document.getElementById('upload-zone');
+    const fileInput      = document.getElementById('file-input');
+    const previewCont    = document.getElementById('preview-container');
+    const previewImg     = document.getElementById('preview-img');
+    const fileNameEl     = document.getElementById('file-name');
+    const btnAnalyze     = document.getElementById('btn-analyze');
+    const btnClear       = document.getElementById('btn-clear');
+    const spinner        = document.getElementById('spinner');
+    const statusText     = document.getElementById('status-text');
+    const errorMsg       = document.getElementById('error-msg');
+    const resultsSection = document.getElementById('results-section');
+    const resultsMeta    = document.getElementById('results-meta');
+    const itemsGrid      = document.getElementById('items-grid');
+    const uploadCard     = document.getElementById('upload-card');
+
+    // Chat refs
+    const chatFab       = document.getElementById('chat-fab');
+    const chatPanel     = document.getElementById('chat-panel');
+    const chatClose     = document.getElementById('chat-close');
+    const chatBody      = document.getElementById('chat-body');
+    const chatWelcome   = document.getElementById('chat-welcome');
+    const chatBadge     = document.getElementById('chat-badge');
+    const typingEl      = document.getElementById('typing-indicator');
+
+    let selectedFile = null;
+    let lastDetectedItems = [];
+
+    // ── Drag & Drop ──────────────────────────────────────
+    ['dragenter','dragover'].forEach(evt => {
+        uploadZone.addEventListener(evt, e => { e.preventDefault(); uploadZone.classList.add('drag-over'); uploadCard.classList.add('drag-over'); });
+    });
+    ['dragleave','drop'].forEach(evt => {
+        uploadZone.addEventListener(evt, e => { e.preventDefault(); uploadZone.classList.remove('drag-over'); uploadCard.classList.remove('drag-over'); });
+    });
+    uploadZone.addEventListener('drop', e => {
+        const files = e.dataTransfer.files;
+        if (files.length) handleFile(files[0]);
+    });
+    uploadZone.addEventListener('click', () => fileInput.click());
+    uploadZone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+    fileInput.addEventListener('change', () => { if (fileInput.files.length) handleFile(fileInput.files[0]); });
+
+    function handleFile(file) {
+        if (!file.type.startsWith('image/')) { showError('Please upload an image file.'); return; }
+        selectedFile = file;
+        const url = URL.createObjectURL(file);
+        previewImg.src = url;
+        fileNameEl.textContent = file.name + ' · ' + (file.size / 1024).toFixed(0) + ' KB';
+        previewCont.classList.add('show');
+        btnAnalyze.disabled = false;
+        btnClear.disabled = false;
+        hideError(); hideResults();
+    }
+
+    // ── Clear ────────────────────────────────────────────
+    btnClear.addEventListener('click', () => {
+        selectedFile = null;
+        fileInput.value = '';
+        previewCont.classList.remove('show');
+        btnAnalyze.disabled = true;
+        btnClear.disabled = true;
+        hideError(); hideResults();
+        statusText.textContent = '';
+        lastDetectedItems = [];
+    });
+
+    // ── Analyze ──────────────────────────────────────────
+    btnAnalyze.addEventListener('click', async () => {
+        if (!selectedFile) return;
+        hideError(); hideResults();
+        spinner.classList.add('show');
+        statusText.textContent = 'Segmenting clothing items…';
+        btnAnalyze.disabled = true;
+
+        const form = new FormData();
+        form.append('file', selectedFile);
+
+        try {
+            const resp = await fetch('/api/predict', { method: 'POST', body: form });
+            const data = await resp.json();
+            spinner.classList.remove('show');
+
+            if (!data.success) { showError(data.message || 'Prediction failed.'); return; }
+            if (!data.items.length) { statusText.textContent = 'No clothing items detected — try another image.'; return; }
+
+            statusText.textContent = '';
+            renderResults(data);
+
+            // Store items and auto-trigger chat
+            lastDetectedItems = data.items;
+            triggerChat(data.items);
+        } catch (err) {
+            spinner.classList.remove('show');
+            showError('Network error: ' + err.message);
+        } finally {
+            btnAnalyze.disabled = false;
+        }
+    });
+
+    // ── Render Results ───────────────────────────────────
+    function renderResults(data) {
+        resultsMeta.textContent = `${data.num_items_detected} item(s) · ${data.processing_time_ms.toFixed(0)} ms`;
+        itemsGrid.innerHTML = '';
+
+        data.items.forEach(item => {
+            const confPct = (item.confidence * 100).toFixed(1);
+            const confClass = item.confidence >= 0.7 ? 'high' : item.confidence >= 0.45 ? 'medium' : 'low';
+
+            const card = document.createElement('article');
+            card.className = 'glass-card item-card';
+            card.innerHTML = `
+                ${item.crop_path ? `<img class="item-card-img" src="${item.crop_path}" alt="Cropped ${item.label}">` : ''}
+                <div class="item-card-body">
+                    <span class="item-label">${item.label}</span>
+                    <div class="item-attrs">
+                        ${item.color ? `<span class="attr-chip">🎨 ${item.color}</span>` : ''}
+                        ${item.pattern ? `<span class="attr-chip">✦ ${item.pattern}</span>` : ''}
+                    </div>
+                    <div class="item-conf">
+                        <div class="conf-label">
+                            <span>Confidence</span>
+                            <span class="conf-value">${confPct}%</span>
+                        </div>
+                        <div class="conf-bar"><div class="conf-fill ${confClass}" style="width:${confPct}%"></div></div>
+                    </div>
+                </div>
+            `;
+            itemsGrid.appendChild(card);
+        });
+
+        resultsSection.classList.add('show');
+    }
+
+    // ═══════════════ CHAT LOGIC ═══════════════
+
+    let chatOpen = false;
+
+    chatFab.addEventListener('click', () => toggleChat());
+    chatClose.addEventListener('click', () => toggleChat(false));
+
+    function toggleChat(force) {
+        chatOpen = force !== undefined ? force : !chatOpen;
+        chatPanel.classList.toggle('open', chatOpen);
+        chatBadge.classList.remove('show');
+    }
+
+    function addChatMessage(text, type = 'bot') {
+        // Hide welcome on first message
+        chatWelcome.style.display = 'none';
+
+        const msg = document.createElement('div');
+        msg.className = `chat-msg ${type}`;
+        msg.innerHTML = renderMarkdown(text);
+        chatBody.insertBefore(msg, typingEl);
+        chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    function showTyping(show) {
+        typingEl.classList.toggle('show', show);
+        if (show) chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    async function triggerChat(items) {
+        // Auto-open the chat panel
+        toggleChat(true);
+
+        // Show typing indicator
+        showTyping(true);
+
+        const payload = {
+            items: items.map(i => ({
+                label: i.label,
+                confidence: i.confidence,
+                color: i.color || null,
+                pattern: i.pattern || null,
+                crop_path: i.crop_path || null,
+            })),
+        };
+
+        try {
+            const resp = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            const data = await resp.json();
+            showTyping(false);
+
+            if (data.success && data.message) {
+                addChatMessage(data.message, 'bot');
+            } else {
+                addChatMessage('Sorry, I couldn\'t generate recommendations right now. Please try again!', 'bot');
+            }
+        } catch (err) {
+            showTyping(false);
+            addChatMessage('Oops! Something went wrong connecting to the shopping assistant. Please try later.', 'bot');
+        }
+    }
+
+    // ── Simple markdown renderer ─────────────────────────
+    function renderMarkdown(text) {
+        return text
+            // Bold
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            // Links
+            .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+            // Line breaks
+            .replace(/\n/g, '<br>');
+    }
+
+    // ── Helpers ──────────────────────────────────────────
+    function showError(msg) { errorMsg.textContent = msg; errorMsg.classList.add('show'); statusText.textContent = ''; }
+    function hideError()    { errorMsg.classList.remove('show'); }
+    function hideResults()  { resultsSection.classList.remove('show'); }
+})();
+</script>
+</body>
+</html>
