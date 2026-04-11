@@ -23,6 +23,22 @@ from app.config import (
 
 logger = logging.getLogger(__name__)
 
+_LABEL_ALIASES = {
+    "shitt": "shirt",
+    "watches": "watch",
+}
+
+_PASSTHROUGH_LABELS = {
+    "shirt",
+    "watch",
+    "surfboard",
+    "backpack",
+    "umbrella",
+    "handbag",
+    "tie",
+    "suitcase",
+}
+
 # ImageNet normalisation (EfficientNet pretrained)
 _TRANSFORM = transforms.Compose(
     [
@@ -114,12 +130,18 @@ class ClassificationService:
         """
         h, w = crop.shape[:2]
         aspect = w / max(h, 1)
+        hint = (region_hint or "").strip().lower().replace(" ", "_")
+        hint = _LABEL_ALIASES.get(hint, hint)
 
-        if "upper" in region_hint:
+        # Preserve explicit non-garment classes from segmentation (e.g. surfboard).
+        if hint in _PASSTHROUGH_LABELS:
+            return hint, 0.90, {}
+
+        if "upper" in hint:
             if aspect > 1.2:
                 return "jacket", 0.55, {}
             return "shirt", 0.50, {}
-        elif "lower" in region_hint:
+        elif "lower" in hint:
             if aspect < 0.55:
                 return "jeans", 0.50, {}
             return "pants", 0.50, {}
